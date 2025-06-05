@@ -39,15 +39,19 @@ export default function AnalysisPage() {
   const [sensorData, setSensorData] = useState(generateData(12)) // Start with 1 hour of data (12 * 5 minutes)
   const [currentReadings, setCurrentReadings] = useState(sensorData[sensorData.length - 1])
 
+  // NEW: Fetch real VOC data from backend
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSensorData(prevData => {
-        const newData = [...prevData.slice(1), ...generateData(1)]
-        setCurrentReadings(newData[newData.length - 1])
-        return newData
-      })
-    }, 300000) // Update every 5 minutes
-
+    const fetchRealData = async () => {
+      try {
+        const res = await fetch('/api/voc') // You must set up this endpoint
+        const data = await res.json()
+        setSensorData(prev => [...prev.slice(1), data])
+        setCurrentReadings(data)
+      } catch (err) {
+        console.error('Failed to fetch real sensor data:', err)
+      }
+    }
+    const interval = setInterval(fetchRealData, 5000) // Fetch every 5 seconds
     return () => clearInterval(interval)
   }, [])
 
@@ -184,4 +188,3 @@ export default function AnalysisPage() {
     </div>
   )
 }
-
